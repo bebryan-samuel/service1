@@ -1,0 +1,13 @@
+{
+  "name": "pii-masker-service",
+  "version": "1.0.0",
+  "description": "Service 1 (AI-1): PII Masking & Security Service - zero-leak privacy wall for LLM/embedding calls",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/server-main.js",
+    "test": "node --test test/*.test.js",
+    "demo": "node examples/demo.js fixtures/client_agreement.txt"
+  },
+  "engines": { "node": ">=18" },
+  "license": "UNLICENSED"
+}

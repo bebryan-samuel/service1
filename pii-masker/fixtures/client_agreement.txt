@@ -1,0 +1,20 @@
+CLIENT INVESTMENT AGREEMENT
+Date: 2024-03-15
+
+This Agreement is made between Sterling Wealth Partners LLC ("Firm") and Jane Smith ("Client"),
+residing at 4521 Maple Avenue, Springfield, IL 62704.
+
+Client: Jane Smith
+SSN: 987-65-4321
+Email: jane.smith@example.com
+Phone: (555) 867-5309
+Account Number: #AC-99120
+
+Jane's initial deposit is $250,000.00 into account #AC-99120. Ms. Smith's portfolio balance was $1,234,567 as of December 31.
+Co-investor: Robert Johnson, phone 555-201-3344, SSN 123-45-6789.
+
+The Firm invests primarily in S&P 500 index funds and complies with FINRA Rule 2210 and Securities and Exchange Commission guidance.
+We guarantee an 18% return on all investments.
+The minimum investment is $10,000 for all clients.
+
+Dear Jane, Robert Johnson will review your account with Charles Schwab as custodian.

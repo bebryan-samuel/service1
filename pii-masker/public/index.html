@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PII Masker - Dev Console</title>
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--mut:#666;--card:#f6f7f9;--bd:#d9dce1;--acc:#1f5eff;--pii:#fde68a;--tok:#dbeafe}
+@media (prefers-color-scheme:dark){:root{--bg:#14161a;--fg:#e8e8e8;--mut:#9aa0a6;--card:#1d2026;--bd:#31353d;--acc:#6b9bff;--pii:#5b4a10;--tok:#1e3a5f}}
+body{margin:0;font:14px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg)}
+header{padding:14px 20px;border-bottom:1px solid var(--bd)}h1{font-size:17px;margin:0}header p{margin:2px 0 0;color:var(--mut)}
+main{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;padding:16px 20px}
+section{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:12px;min-width:0}
+h2{font-size:13px;margin:0 0 8px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+textarea,pre,.view{width:100%;box-sizing:border-box;height:300px;overflow:auto;margin:0;padding:8px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--fg);font:12px/1.5 ui-monospace,monospace;white-space:pre-wrap;word-break:break-word}
+button,input{font:inherit;padding:6px 10px;border-radius:6px;border:1px solid var(--bd);background:var(--bg);color:var(--fg)}
+button{cursor:pointer;background:var(--acc);color:#fff;border-color:var(--acc)}button.alt{background:var(--bg);color:var(--fg);border-color:var(--bd)}
+.row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center}
+mark.pii{background:var(--pii);color:inherit;border-radius:3px;padding:0 2px}.tok{background:var(--tok);border-radius:3px;padding:0 2px}
+.msg{color:var(--mut);font-size:12px}
+</style></head><body>
+<header><h1>PII Masking &amp; Security Service - Dev Console</h1>
+<p>Raw text &rarr; masked at rest &rarr; what the AI vendor actually receives &rarr; officer view (rehydrated in the browser).</p></header>
+<main>
+<section><h2>1. Raw document (never leaves server)</h2><textarea id="raw">CLIENT INVESTMENT AGREEMENT
+
+Between Sterling Wealth Partners LLC and Jane Smith, residing at 4521 Maple Avenue, Springfield, IL 62704.
+Client: Jane Smith
+SSN: 987-65-4321
+Email: jane.smith@example.com
+Phone: (555) 867-5309
+Account Number: #AC-99120
+
+Jane's initial deposit is $250,000.00 into account #AC-99120.
+The Firm invests in S&amp;P 500 index funds under FINRA Rule 2210.
+We guarantee an 18% return on all investments.
+</textarea>
+<div class="row"><input id="tok" size="12" value="dev-token" aria-label="API token"><button id="go">Mask + send to mock LLM</button><span class="msg" id="st"></span></div></section>
+<section><h2>2. Masked text (stored at rest)</h2><pre id="masked"></pre></section>
+<section><h2>3. Dev payload viewer - exact outbound request</h2><pre id="payload"></pre>
+<div class="row"><button class="alt" id="refresh">Refresh</button><button class="alt" id="clear">Clear</button></div></section>
+<section><h2>4. Officer view (rehydrated client-side)</h2><div class="view" id="officer"></div>
+<div class="row"><button class="alt" id="toggle">Hide real values</button><span class="msg">Same masked text; mapping fetched with officer token.</span></div></section>
+</main>
+<script src="/rehydrator.js"></script>
+<script>
+var $=function(i){return document.getElementById(i)},S={};
+var H=function(){return{'content-type':'application/json',authorization:'Bearer '+$('tok').value}};
+function paintOfficer(){var m=S.masked||'';$('officer').innerHTML=S.show?Rehydrator.rehydrateHtml(m,S.tokens||{}):Rehydrator.escapeHtml(m).replace(/\[[A-Z]+_\d+\]/g,'<span class="tok">$&</span>');$('toggle').textContent=S.show?'Hide real values':'Show real values'}
+async function payloads(){var r=await fetch('/dev/payloads',{headers:H()});if(!r.ok){$('payload').textContent='HTTP '+r.status;return}var j=await r.json();$('payload').textContent=j.payloads.length?JSON.stringify(j.payloads[0],null,2):'(none yet)'}
+$('go').onclick=async function(){try{$('st').textContent='working...';
+ var r=await fetch('/documents',{method:'POST',headers:H(),body:JSON.stringify({text:$('raw').value})});var j=await r.json();if(!r.ok)throw new Error(j.error);
+ S.id=j.documentId;S.masked=j.maskedText;$('masked').textContent=j.maskedText;
+ var m=await fetch('/documents/'+S.id+'/mapping',{headers:H()});S.tokens=(await m.json()).tokens;S.show=true;paintOfficer();
+ await fetch('/dev/mock-llm',{method:'POST',headers:H(),body:JSON.stringify({documentId:S.id,text:$('raw').value})});await payloads();
+ $('st').textContent=j.entities.length+' entities masked'}catch(e){$('st').textContent='Error: '+e.message}};
+$('toggle').onclick=function(){S.show=!S.show;paintOfficer()};$('refresh').onclick=payloads;
+$('clear').onclick=async function(){await fetch('/dev/payloads',{method:'DELETE',headers:H()});payloads()};
+</script></body></html>
